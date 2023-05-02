@@ -1,0 +1,93 @@
+version: "3.8"
+networks:
+  app-network:
+    driver: bridge
+volumes:
+  wp-phpmyadmin-data:
+services:
+  wp-app:
+    env_file:
+      - .env
+      - ${DB_ENV_PATH}
+    environment:
+      WORDPRESS_DB_HOST: wp-db
+      WORDPRESS_TABLE_PREFIX: wp_
+    container_name: wp-app
+    image: wordpress:6.2.0-php8.1-fpm-alpine
+    restart: unless-stopped
+    depends_on:
+      - wp-db
+    volumes:
+      - ../wp-app/:/var/www/html/
+      - ./wp-app/php/wp-app.ini:/usr/local/etc/php/conf.d/wp-app.ini
+    networks:
+      - app-network
+  wp-db:
+    env_file:
+      - .env
+      - ${DB_ENV_PATH}
+    environment:
+      MYSQL_AUTHENTICATION_PLUGIN: mysql_native_password
+    image: mysql
+    container_name: wp-db
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    volumes:
+      - ${DB_VOLUME}
+    networks:
+      - app-network
+  wp-phpmyadmin:
+    env_file:
+      - .env
+    image: phpmyadmin/phpmyadmin:fpm-alpine
+    container_name: wp-phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: wp-db
+    depends_on:
+      - wp-db
+    volumes:
+      - wp-phpmyadmin-data:/var/www/html/
+      - ./phpmyadmin/php/wp-phpmyadmin.ini:/usr/local/etc/php/conf.d/wp-phpmyadmin.ini
+    networks:
+      - app-network
+  wp-nginx:
+    env_file:
+      - .env
+    image: nginx:alpine
+    container_name: wp-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - wp-app
+      - wp-phpmyadmin
+    volumes:
+      - wp-phpmyadmin-data:/var/www/html/wp-phpmyadmin/:ro
+      - ../wp-app/:/var/www/html/wp-app
+      - ${NGINX_MAIN_CONF_VOLUME}
+      - ${NGINX_CONF_D_VOLUME}
+      - ${LETSENCRYPT_VOLUME}
+      - ${CERTBOT_VOLUME}
+    command: >
+      sh -c "envsubst '$$DOMAIN_NAME' < /etc/nginx/conf.d/wp-app.conf.template > /etc/nginx/conf.d/wp-app.conf &&
+             envsubst '$$PHP_MY_ADMIN_DOMAIN_NAME' < /etc/nginx/conf.d/phpmyadmin.conf.template > /etc/nginx/conf.d/phpmyadmin.conf &&
+             (while :; do sleep 6h & wait $${!}; nginx -s reload; done) & nginx -g 'daemon off;'"
+    networks:
+      - app-network
+  wp-certbot:
+    env_file:
+      - .env
+    image: certbot/certbot
+    container_name: wp-certbot
+    restart: unless-stopped
+    volumes:
+      - ${LETSENCRYPT_VOLUME}
+      - ${CERTBOT_VOLUME}
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    profiles:
+      - production
+    networks:
+      - app-network

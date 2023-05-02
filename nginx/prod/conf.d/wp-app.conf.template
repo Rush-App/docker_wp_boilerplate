@@ -1,0 +1,36 @@
+server {
+    server_name $DOMAIN_NAME www.$DOMAIN_NAME;
+    index index.html index.htm index.php;
+    root /var/www/html/wp-app/;
+
+    client_max_body_size 64M;
+    charset utf-8;
+
+    location / {
+        try_files $uri $uri/ /index.php$is_args$args;
+    }
+
+    location ~ \.php$ {
+        root /var/www/html/;
+        fastcgi_pass wp-app:9000;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+    listen 443 ssl;
+    ssl_certificate /etc/letsencrypt/live/$DOMAIN_NAME/fullchain.pem; #for_production
+    ssl_certificate_key /etc/letsencrypt/live/$DOMAIN_NAME/privkey.pem; #for_production
+    include /etc/letsencrypt/options-ssl-nginx.conf; #for_production
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; #for_production
+}
+
+
+server {
+    if ($host = $DOMAIN_NAME) {
+        return 301 https://$host$request_uri;
+    }
+
+    server_name $DOMAIN_NAME www.$DOMAIN_NAME;
+    listen 80;
+    return 404;
+}

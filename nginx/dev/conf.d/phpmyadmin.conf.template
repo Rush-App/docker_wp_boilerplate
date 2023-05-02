@@ -1,0 +1,19 @@
+server {
+    server_name $PHP_MY_ADMIN_DOMAIN_NAME www.$PHP_MY_ADMIN_DOMAIN_NAME;
+    root /var/www/html/wp-phpmyadmin/;
+
+    client_max_body_size 64M;
+    charset utf-8;
+
+    location ^~ /phpmyadmin {
+        alias /var/www/html/wp-phpmyadmin/;
+        index index.php;
+        location ~ \.php$ {
+            try_files $uri =404;
+            include fastcgi_params;
+            fastcgi_split_path_info ^\/phpmyadmin\/(.+\.php)(.*)$;
+            fastcgi_param SCRIPT_FILENAME $fastcgi_script_name;
+            fastcgi_pass wp-phpmyadmin:9000;
+        }
+    }
+}

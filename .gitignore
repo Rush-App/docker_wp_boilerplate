@@ -1,0 +1,26 @@
+wp-app/prod/.env
+database/prod/data
+database/prod/.env
+certbot/dev/conf
+certbot/dev/www
+certbot/prod/conf
+certbot/prod/www
+nginx/dev/conf.d/wp-app.conf
+nginx/dev/conf.d/phpmyadmin.conf
+nginx/prod/conf.d/wp-app.conf
+nginx/prod/conf.d/phpmyadmin.conf
+/.env.prod
+/.env
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# System Files
+.DS_Store
+Thumbs.db

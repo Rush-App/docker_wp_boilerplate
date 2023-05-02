@@ -1,0 +1,34 @@
+server {
+    server_name $PHP_MY_ADMIN_DOMAIN_NAME www.$PHP_MY_ADMIN_DOMAIN_NAME;
+    root /var/www/html/wp-phpmyadmin/;
+
+    client_max_body_size 64M;
+    charset utf-8;
+
+    location ^~ /phpmyadmin {
+        alias /var/www/html/wp-phpmyadmin/;
+        index index.php;
+        location ~ \.php$ {
+            try_files $uri =404;
+            include fastcgi_params;
+            fastcgi_split_path_info ^\/phpmyadmin\/(.+\.php)(.*)$;
+            fastcgi_param SCRIPT_FILENAME $fastcgi_script_name;
+            fastcgi_pass wp-phpmyadmin:9000;
+        }
+    }
+    listen 443 ssl;
+    ssl_certificate /etc/letsencrypt/live/$PHP_MY_ADMIN_DOMAIN_NAME/fullchain.pem; #for_production
+    ssl_certificate_key /etc/letsencrypt/live/$PHP_MY_ADMIN_DOMAIN_NAME/privkey.pem; #for_production
+    include /etc/letsencrypt/options-ssl-nginx.conf; #for_production
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; #for_production
+}
+
+server {
+    if ($host = $PHP_MY_ADMIN_DOMAIN_NAME) {
+        return 301 https://$host$request_uri;
+    }
+
+    server_name $PHP_MY_ADMIN_DOMAIN_NAME www.$PHP_MY_ADMIN_DOMAIN_NAME;
+    listen 80;
+    return 404;
+}
