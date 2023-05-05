@@ -28,7 +28,7 @@ set_variable() {
     if [ -z "$current_value" ]; then
       echo "Enter value for $key:"
       read value
-      sed -i "s/^$key=.*/$key=$value/" "$env_file"
+       sed -e "s/^$key=.*/$key=$value/" "$env_file" > temp_file && mv temp_file "$env_file"
     fi
   else
     echo "Enter value for $key:"
@@ -47,7 +47,7 @@ fi
 if [ -s "$PATH_TO_DOCKER_ENV_FILE" ]; then
   # Prompt the user to replace the .env file with the selected environment file
   read -p "Do you want to replace .env with $env_file? [y/N]: " confirm
-  if [[ ! $confirm =~ ^[yY](es)*$ ]]; then
+  if [[ $confirm =~ ^[yY](es)*$ ]]; then
       cp "$env_file" "$PATH_TO_DOCKER_ENV_FILE"
   fi
 else

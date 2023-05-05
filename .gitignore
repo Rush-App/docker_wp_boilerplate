@@ -1,4 +1,5 @@
 wp-app/prod/.env
+database/dev/data
 database/prod/data
 database/prod/.env
 certbot/dev/conf

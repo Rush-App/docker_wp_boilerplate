@@ -3,7 +3,7 @@
 # Check if Docker is installed
 if ! command -v docker &> /dev/null; then
     read -p "Docker is not installed or running. Do you want to install it? [y/N]: " confirm
-    if [[ ! $confirm =~ ^[nN](o)*$ ]]; then
+    if [[ $confirm =~ ^[nN](o)*$ ]]; then
         echo "Before using this script you must install Docker."
         exit 1
     fi
@@ -32,7 +32,7 @@ fi
 # Check if Docker Compose is installed
 if ! command -v docker-compose &> /dev/null; then
     read -p "Docker Compose is not installed. Do you want to install it? [y/N]: " confirm
-    if [[ ! $confirm =~ ^[nN](o)*$ ]]; then
+    if [[ $confirm =~ ^[nN](o)*$ ]]; then
         echo "Before using this script you must install Docker Compose."
         exit 1
     fi

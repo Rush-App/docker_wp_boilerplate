@@ -31,8 +31,6 @@ services:
     image: mysql
     container_name: wp-db
     restart: unless-stopped
-    ports:
-      - "3306:3306"
     volumes:
       - ${DB_VOLUME}
     networks:
@@ -50,6 +48,8 @@ services:
     volumes:
       - wp-phpmyadmin-data:/var/www/html/
       - ./phpmyadmin/php/wp-phpmyadmin.ini:/usr/local/etc/php/conf.d/wp-phpmyadmin.ini
+    profiles:
+      - dev
     networks:
       - app-network
   wp-nginx:
@@ -67,14 +67,12 @@ services:
     volumes:
       - wp-phpmyadmin-data:/var/www/html/wp-phpmyadmin/:ro
       - ../wp-app/:/var/www/html/wp-app
+      - ./scripts/wp-nginx-command.sh:/scripts/wp-nginx-command.sh
       - ${NGINX_MAIN_CONF_VOLUME}
       - ${NGINX_CONF_D_VOLUME}
       - ${LETSENCRYPT_VOLUME}
       - ${CERTBOT_VOLUME}
-    command: >
-      sh -c "envsubst '$$DOMAIN_NAME' < /etc/nginx/conf.d/wp-app.conf.template > /etc/nginx/conf.d/wp-app.conf &&
-             envsubst '$$PHP_MY_ADMIN_DOMAIN_NAME' < /etc/nginx/conf.d/phpmyadmin.conf.template > /etc/nginx/conf.d/phpmyadmin.conf &&
-             (while :; do sleep 6h & wait $${!}; nginx -s reload; done) & nginx -g 'daemon off;'"
+    command: sh /scripts/wp-nginx-command.sh
     networks:
       - app-network
   wp-certbot:
@@ -88,6 +86,6 @@ services:
       - ${CERTBOT_VOLUME}
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
     profiles:
-      - production
+      - prod
     networks:
       - app-network

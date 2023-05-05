@@ -8,4 +8,12 @@ chmod +x scripts/*.sh
 ./scripts/prepare-docker-env-file.sh
 ./scripts/is-urls-in-hosts-file.sh
 
-docker-compose up --build
+source .env
+
+if [ "$ENV" = "dev" ]; then
+    docker-compose --profile dev up --build
+fi
+
+if [ "$ENV" = "prod" ]; then
+    docker-compose --profile prod up --build
+fi
